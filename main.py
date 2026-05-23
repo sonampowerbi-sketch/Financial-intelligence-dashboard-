@@ -1,9 +1,8 @@
-# main.py - Place this at the ROOT level of your repository
+# main.py - Simplified version without Plotly
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 
 # Page configuration
 st.set_page_config(
@@ -49,9 +48,6 @@ with st.sidebar:
     
     st.markdown("---")
     st.info("📅 Financial Year: FY 2024-25")
-    st.markdown("### 📥 Download")
-    if st.button("Download Report"):
-        st.success("Report ready for download")
 
 # Main content
 if report_type == "📈 Monthly Financial Report":
@@ -60,11 +56,9 @@ if report_type == "📈 Monthly Financial Report":
     # Metrics Row
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("💰 Total Revenue", f"₹{df['Revenue'].sum():,.0f} Cr", 
-                 f"{((df['Revenue'].iloc[-1] - df['Revenue'].iloc[0])/df['Revenue'].iloc[0]*100):.1f}%")
+        st.metric("💰 Total Revenue", f"₹{df['Revenue'].sum():,.0f} Cr")
     with col2:
-        st.metric("💸 Total Expenses", f"₹{df['Expenses'].sum():,.0f} Cr",
-                 f"{((df['Expenses'].iloc[-1] - df['Expenses'].iloc[0])/df['Expenses'].iloc[0]*100):.1f}%")
+        st.metric("💸 Total Expenses", f"₹{df['Expenses'].sum():,.0f} Cr")
     with col3:
         net_profit = (df['Revenue'] - df['Expenses']).sum()
         st.metric("📈 Net Profit", f"₹{net_profit:,.0f} Cr")
@@ -74,129 +68,99 @@ if report_type == "📈 Monthly Financial Report":
     
     st.markdown("---")
     
-    # Revenue by Segment
+    # Revenue by Segment - Using matplotlib
     st.subheader("📊 Revenue Breakdown by Segment")
-    col1, col2 = st.columns([2, 1])
     
-    with col1:
-        fig = px.bar(df, x='Month', y=['O2C_Revenue', 'Retail_Revenue', 'Digital_Revenue'],
-                     title="Monthly Revenue by Business Segment",
-                     labels={'value': 'Revenue (₹ Crores)', 'Month': 'Month', 'variable': 'Segment'},
-                     barmode='stack')
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     
-    with col2:
-        avg_revenue = df[['O2C_Revenue', 'Retail_Revenue', 'Digital_Revenue']].mean()
-        fig_pie = px.pie(values=avg_revenue.values, names=avg_revenue.index,
-                         title="Average Revenue Share")
-        st.plotly_chart(fig_pie, use_container_width=True)
+    # Bar chart
+    x = np.arange(len(df['Month']))
+    width = 0.25
+    
+    ax1.bar(x - width, df['O2C_Revenue'], width, label='O2C', color='navy')
+    ax1.bar(x, df['Retail_Revenue'], width, label='Retail', color='lightblue')
+    ax1.bar(x + width, df['Digital_Revenue'], width, label='Digital', color='skyblue')
+    ax1.set_xlabel('Month')
+    ax1.set_ylabel('Revenue (₹ Crores)')
+    ax1.set_title('Monthly Revenue by Segment')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(df['Month'], rotation=45)
+    ax1.legend()
+    
+    # Pie chart
+    avg_revenue = [df['O2C_Revenue'].mean(), df['Retail_Revenue'].mean(), df['Digital_Revenue'].mean()]
+    labels = ['O2C', 'Retail', 'Digital']
+    colors = ['navy', 'lightblue', 'skyblue']
+    ax2.pie(avg_revenue, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+    ax2.set_title('Average Revenue Share')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
     
     # Revenue vs Expenses Trend
     st.subheader("📈 Revenue vs Expenses Trend")
-    fig2 = go.Figure()
-    fig2.add_trace(go.Scatter(x=df['Month'], y=df['Revenue'], 
-                              name='Revenue', line=dict(color='green', width=3)))
-    fig2.add_trace(go.Scatter(x=df['Month'], y=df['Expenses'], 
-                              name='Expenses', line=dict(color='red', width=3)))
-    fig2.update_layout(height=450, xaxis_title='Month', yaxis_title='Amount (₹ Crores)')
-    st.plotly_chart(fig2, use_container_width=True)
     
-    # Expense Breakdown
-    st.subheader("💰 Expense Breakdown")
-    expense_cols = ['O2C_Expense', 'Retail_Expense', 'Digital_Expense', 'Employee_Cost', 'Marketing_Cost']
-    # Create sample expense data
-    expense_data = {
-        'Category': ['O2C Operations', 'Retail Operations', 'Digital Services', 'Employee Cost', 'Marketing'],
-        'Amount': [850000, 528000, 273000, 110000, 48000]
-    }
-    expense_df = pd.DataFrame(expense_data)
-    fig3 = px.pie(expense_df, values='Amount', names='Category', title="Annual Expense Breakdown")
-    st.plotly_chart(fig3, use_container_width=True)
+    fig2, ax = plt.subplots(figsize=(12, 5))
+    ax.plot(df['Month'], df['Revenue'], marker='o', linewidth=2, label='Revenue', color='green')
+    ax.plot(df['Month'], df['Expenses'], marker='s', linewidth=2, label='Expenses', color='red')
+    ax.set_xlabel('Month')
+    ax.set_ylabel('Amount (₹ Crores)')
+    ax.set_title('Revenue vs Expenses Trend')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.xticks(rotation=45)
+    st.pyplot(fig2)
     
     # Data Table
     with st.expander("📋 View Detailed Monthly Data"):
-        st.dataframe(df.style.format({
-            'Revenue': '₹{:,.0f} Cr',
-            'Expenses': '₹{:,.0f} Cr',
-            'O2C_Revenue': '₹{:,.0f} Cr',
-            'Retail_Revenue': '₹{:,.0f} Cr',
-            'Digital_Revenue': '₹{:,.0f} Cr'
-        }))
+        st.dataframe(df)
 
 elif report_type == "💰 Cash Flow Statement":
     st.header("💰 Cash Flow Statement")
     
     # Create cash flow data
     cf_df = df.copy()
-    cf_df['Operating_Inflows'] = cf_df['Revenue']
-    cf_df['Operating_Outflows'] = cf_df['Expenses'] * 0.85
-    cf_df['Net_Operating_CF'] = cf_df['Operating_Inflows'] - cf_df['Operating_Outflows']
-    cf_df['Investing_Outflows'] = np.random.uniform(8000, 12000, len(cf_df))
-    cf_df['Net_Investing_CF'] = -cf_df['Investing_Outflows']
-    cf_df['Financing_Inflows'] = np.where(cf_df['Month'].str.contains('Jun|Dec'), 50000, 0)
-    cf_df['Net_Financing_CF'] = cf_df['Financing_Inflows']
-    cf_df['Net_Cash_Flow'] = cf_df['Net_Operating_CF'] + cf_df['Net_Investing_CF'] + cf_df['Net_Financing_CF']
+    cf_df['Operating_CF'] = cf_df['Revenue'] - cf_df['Expenses'] * 0.8
+    cf_df['Investing_CF'] = -np.random.uniform(8000, 12000, len(cf_df))
+    cf_df['Financing_CF'] = np.where(cf_df['Month'].str.contains('Jun|Dec'), 50000, 0)
+    cf_df['Net_CF'] = cf_df['Operating_CF'] + cf_df['Investing_CF'] + cf_df['Financing_CF']
     
     # Metrics
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2 = st.columns(2)
     with col1:
-        st.metric("Total Inflows", f"₹{(cf_df['Operating_Inflows'].sum() + cf_df['Financing_Inflows'].sum()):,.0f} Cr")
+        st.metric("Total Operating CF", f"₹{cf_df['Operating_CF'].sum():,.0f} Cr")
+        st.metric("Total Investing CF", f"₹{cf_df['Investing_CF'].sum():,.0f} Cr")
     with col2:
-        st.metric("Total Outflows", f"₹{(cf_df['Operating_Outflows'].sum() + cf_df['Investing_Outflows'].sum()):,.0f} Cr")
-    with col3:
-        st.metric("Net Cash Flow", f"₹{cf_df['Net_Cash_Flow'].sum():,.0f} Cr")
-    with col4:
-        st.metric("Ending Balance", f"₹{250000 + cf_df['Net_Cash_Flow'].sum():,.0f} Cr")
+        st.metric("Total Financing CF", f"₹{cf_df['Financing_CF'].sum():,.0f} Cr")
+        st.metric("Net Cash Flow", f"₹{cf_df['Net_CF'].sum():,.0f} Cr")
     
     st.markdown("---")
     
-    # Cash Flow Waterfall
-    st.subheader("Cash Flow Waterfall Analysis")
-    opening_balance = 250000
-    closing_balance = opening_balance + cf_df['Net_Cash_Flow'].sum()
+    # Cash flow chart
+    st.subheader("Cash Flow Components")
     
-    fig = go.Figure(go.Waterfall(
-        name="Cash Flow",
-        orientation="v",
-        measure=["absolute", "relative", "relative", "relative", "total"],
-        x=["Opening Balance", "Operating CF", "Investing CF", "Financing CF", "Closing Balance"],
-        y=[opening_balance, 
-           cf_df['Net_Operating_CF'].sum(),
-           cf_df['Net_Investing_CF'].sum(),
-           cf_df['Net_Financing_CF'].sum(),
-           closing_balance],
-        textposition="outside",
-        text=[f"₹{opening_balance:,.0f}", f"₹{cf_df['Net_Operating_CF'].sum():,.0f}",
-              f"₹{cf_df['Net_Investing_CF'].sum():,.0f}", f"₹{cf_df['Net_Financing_CF'].sum():,.0f}",
-              f"₹{closing_balance:,.0f}"]
-    ))
-    fig.update_layout(title="Annual Cash Flow Statement", height=500)
-    st.plotly_chart(fig, use_container_width=True)
+    fig, ax = plt.subplots(figsize=(12, 5))
     
-    # Monthly Cash Flow
-    st.subheader("Monthly Cash Flow Components")
-    fig2 = go.Figure()
-    fig2.add_trace(go.Bar(x=cf_df['Month'], y=cf_df['Net_Operating_CF'], name='Operating CF', marker_color='green'))
-    fig2.add_trace(go.Bar(x=cf_df['Month'], y=cf_df['Net_Investing_CF'], name='Investing CF', marker_color='red'))
-    fig2.add_trace(go.Bar(x=cf_df['Month'], y=cf_df['Net_Financing_CF'], name='Financing CF', marker_color='blue'))
-    fig2.update_layout(barmode='relative', title="Cash Flow by Month", height=450)
-    st.plotly_chart(fig2, use_container_width=True)
+    x = np.arange(len(cf_df['Month']))
+    ax.bar(x, cf_df['Operating_CF'], label='Operating CF', color='green', alpha=0.7)
+    ax.bar(x, cf_df['Investing_CF'], label='Investing CF', color='red', alpha=0.7)
+    ax.bar(x, cf_df['Financing_CF'], label='Financing CF', color='blue', alpha=0.7)
     
-    # Inflows vs Outflows
-    st.subheader("Inflows vs Outflows Comparison")
-    inflows_outflows = pd.DataFrame({
-        'Category': ['Operating Inflows', 'Financing Inflows', 'Operating Outflows', 'Investing Outflows'],
-        'Amount': [
-            cf_df['Operating_Inflows'].sum(),
-            cf_df['Financing_Inflows'].sum(),
-            cf_df['Operating_Outflows'].sum(),
-            cf_df['Investing_Outflows'].sum()
-        ]
-    })
-    fig3 = px.bar(inflows_outflows, x='Category', y='Amount', 
-                  color='Category', title="Total Inflows vs Outflows")
-    st.plotly_chart(fig3, use_container_width=True)
+    ax.set_xlabel('Month')
+    ax.set_ylabel('Amount (₹ Crores)')
+    ax.set_title('Cash Flow by Month')
+    ax.set_xticks(x)
+    ax.set_xticklabels(cf_df['Month'], rotation=45)
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    
+    # Summary table
+    st.subheader("Monthly Cash Flow Summary")
+    summary_df = cf_df[['Month', 'Operating_CF', 'Investing_CF', 'Financing_CF', 'Net_CF']].round(0)
+    st.dataframe(summary_df)
 
 else:  # Budget vs Actual Report
     st.header("🎯 Budget vs Actual Report")
@@ -211,9 +175,6 @@ else:  # Budget vs Actual Report
     budget_df = pd.DataFrame(budget_data)
     budget_df['Variance'] = budget_df['Actual'] - budget_df['Budget']
     budget_df['Variance_%'] = (budget_df['Variance'] / budget_df['Budget']) * 100
-    budget_df['Status'] = budget_df['Variance_%'].apply(
-        lambda x: '✅ On Track' if abs(x) <= 5 else '⚠️ Review Needed'
-    )
     
     # Summary Metrics
     col1, col2, col3 = st.columns(3)
@@ -224,8 +185,7 @@ else:  # Budget vs Actual Report
         st.metric("Total Actual", f"₹{total_actual:,.0f} Cr")
     with col2:
         total_variance = total_actual - total_budget
-        st.metric("Total Variance", f"₹{total_variance:,.0f} Cr",
-                 delta=f"{((total_variance)/total_budget*100):.1f}%")
+        st.metric("Total Variance", f"₹{total_variance:,.0f} Cr")
     with col3:
         achievement_rate = (total_actual / total_budget) * 100
         st.metric("Budget Achievement", f"{achievement_rate:.1f}%")
@@ -234,47 +194,42 @@ else:  # Budget vs Actual Report
     
     # Budget vs Actual Chart
     st.subheader("Budget vs Actual Comparison")
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=budget_df['Category'], y=budget_df['Budget'], 
-                         name='Budget', marker_color='lightblue'))
-    fig.add_trace(go.Bar(x=budget_df['Category'], y=budget_df['Actual'], 
-                         name='Actual', marker_color='darkblue'))
-    fig.update_layout(barmode='group', title="Budget vs Actual by Category",
-                     xaxis_title="Category", yaxis_title="Amount (₹ Crores)",
-                     height=500)
-    st.plotly_chart(fig, use_container_width=True)
     
-    # Variance Analysis
-    st.subheader("Variance Analysis")
-    col1, col2 = st.columns(2)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
     
-    with col1:
-        fig2 = px.bar(budget_df, x='Category', y='Variance_%', 
-                      color='Status', title="Budget Variance (%)")
-        fig2.add_hline(y=0, line_dash="dash", line_color="black")
-        fig2.update_layout(height=400)
-        st.plotly_chart(fig2, use_container_width=True)
+    # Bar chart
+    x = np.arange(len(budget_df['Category']))
+    width = 0.35
     
-    with col2:
-        # Filter for overspending
-        overspend = budget_df[budget_df['Variance'] > 0]
-        if len(overspend) > 0:
-            fig3 = px.pie(overspend, values='Variance', names='Category', 
-                         title="Areas of Overspending")
-            st.plotly_chart(fig3, use_container_width=True)
-        else:
-            st.success("✅ No overspending detected!")
+    ax1.bar(x - width/2, budget_df['Budget'], width, label='Budget', color='lightblue')
+    ax1.bar(x + width/2, budget_df['Actual'], width, label='Actual', color='darkblue')
+    ax1.set_xlabel('Category')
+    ax1.set_ylabel('Amount (₹ Crores)')
+    ax1.set_title('Budget vs Actual by Category')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(budget_df['Category'], rotation=45, ha='right')
+    ax1.legend()
+    
+    # Variance chart
+    colors = ['red' if x < 0 else 'green' for x in budget_df['Variance_%']]
+    ax2.bar(budget_df['Category'], budget_df['Variance_%'], color=colors)
+    ax2.set_xlabel('Category')
+    ax2.set_ylabel('Variance (%)')
+    ax2.set_title('Budget Variance Percentage')
+    ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
+    ax2.set_xticklabels(budget_df['Category'], rotation=45, ha='right')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
     
     # Detailed Table
-    with st.expander("📋 Detailed Budget vs Actual Table"):
-        st.dataframe(budget_df.style.format({
-            'Budget': '₹{:,.0f} Cr',
-            'Actual': '₹{:,.0f} Cr',
-            'Variance': '₹{:,.0f} Cr',
-            'Variance_%': '{:.1f}%'
-        }).background_gradient(cmap='RdYlGn', subset=['Variance_%']))
+    st.subheader("Detailed Analysis")
+    st.dataframe(budget_df.style.format({
+        'Budget': '₹{:,.0f} Cr',
+        'Actual': '₹{:,.0f} Cr',
+        'Variance': '₹{:,.0f} Cr',
+        'Variance_%': '{:.1f}%'
+    }))
 
-# Footer
 st.markdown("---")
-st.markdown("### 📊 Data Source: Reliance Industries Financial Reports FY 2024-25")
-st.caption("*Disclaimer: This dashboard is for demonstration and educational purposes*")
+st.caption("📊 Reliance Industries Financial Intelligence Dashboard - FY 2024-25")
