@@ -1,4 +1,4 @@
-# main.py - Pure Streamlit version (NO matplotlib needed)
+# main.py - COMPLETELY FIXED VERSION
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -52,8 +52,6 @@ with st.sidebar:
     )
     st.markdown("---")
     st.info("📅 **Financial Year:** FY 2024-25\n\n**Period:** April 2024 - March 2025")
-    st.markdown("---")
-    st.caption("✅ All 3 deliverables included")
 
 # ==================== DELIVERABLE 1: MONTHLY FINANCIAL REPORT ====================
 if report_type == "📈 Monthly Financial Report":
@@ -105,31 +103,21 @@ if report_type == "📈 Monthly Financial Report":
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        # Bar chart using st.bar_chart
         revenue_by_segment = df[['Month', 'O2C_Revenue', 'Retail_Revenue', 'Digital_Revenue']].set_index('Month')
         st.bar_chart(revenue_by_segment, height=400)
         st.caption("Monthly Revenue by Business Segment (₹ Crores)")
     
     with col2:
-        # Pie chart using st.dataframe
-        avg_revenue = {
-            'Segment': ['O2C (Oil to Chemicals)', 'Reliance Retail', 'Jio Digital Services'],
-            'Average Revenue (₹ Cr)': [
-                df['O2C_Revenue'].mean(),
-                df['Retail_Revenue'].mean(),
-                df['Digital_Revenue'].mean()
-            ],
-            'Share %': [
-                (df['O2C_Revenue'].mean() / df[['O2C_Revenue', 'Retail_Revenue', 'Digital_Revenue']].mean().sum()) * 100,
-                (df['Retail_Revenue'].mean() / df[['O2C_Revenue', 'Retail_Revenue', 'Digital_Revenue']].mean().sum()) * 100,
-                (df['Digital_Revenue'].mean() / df[['O2C_Revenue', 'Retail_Revenue', 'Digital_Revenue']].mean().sum()) * 100
+        avg_revenue_data = {
+            'Segment': ['O2C', 'Retail', 'Digital'],
+            'Avg Revenue': [
+                f"₹{df['O2C_Revenue'].mean():,.0f} Cr",
+                f"₹{df['Retail_Revenue'].mean():,.0f} Cr",
+                f"₹{df['Digital_Revenue'].mean():,.0f} Cr"
             ]
         }
-        avg_df = pd.DataFrame(avg_revenue)
-        st.dataframe(avg_df.style.format({
-            'Average Revenue (₹ Cr)': '₹{:,.0f} Cr',
-            'Share %': '{:.1f}%'
-        }), use_container_width=True)
+        avg_df = pd.DataFrame(avg_revenue_data)
+        st.dataframe(avg_df, use_container_width=True)
     
     st.markdown("---")
     
@@ -139,18 +127,15 @@ if report_type == "📈 Monthly Financial Report":
     col1, col2 = st.columns(2)
     
     with col1:
-        # Line chart for revenue
         st.subheader("Revenue Trend")
         revenue_trend = df[['Month', 'Revenue']].set_index('Month')
-        st.line_chart(revenue_trend, height=300, color='#00ff00')
+        st.line_chart(revenue_trend, height=300)
     
     with col2:
-        # Line chart for expenses
         st.subheader("Expenses Trend")
         expense_trend = df[['Month', 'Expenses']].set_index('Month')
-        st.line_chart(expense_trend, height=300, color='#ff0000')
+        st.line_chart(expense_trend, height=300)
     
-    # Combined view
     st.subheader("Revenue vs Expenses Comparison")
     comparison = df[['Month', 'Revenue', 'Expenses']].set_index('Month')
     st.area_chart(comparison, height=350)
@@ -173,9 +158,7 @@ if report_type == "📈 Monthly Financial Report":
         st.bar_chart(expense_df.set_index('Category'), height=350)
     
     with col2:
-        st.dataframe(expense_df.style.format({'Amount (₹ Cr)': '₹{:,.0f} Cr'})
-                     .bar(color='lightcoral', subset=['Amount (₹ Cr)']),
-                     use_container_width=True)
+        st.dataframe(expense_df, use_container_width=True)
     
     st.markdown("---")
     
@@ -183,14 +166,14 @@ if report_type == "📈 Monthly Financial Report":
     st.subheader("🔥 Burn Rate Analysis")
     
     burn_df = df[['Month', 'Burn_Rate']].set_index('Month')
-    st.bar_chart(burn_df, height=350, color='#ff6b35')
+    st.bar_chart(burn_df, height=350)
     
     # Insights
     st.subheader("📊 Key Insights")
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.info(f"**Revenue Growth**\n\n{revenue_growth:.1f}% increase from April to March")
+        st.info(f"**Revenue Growth**\n\n{revenue_growth:.1f}% increase")
     
     with col2:
         profitable_months = len(df[df['Net_Profit'] > 0])
@@ -198,20 +181,14 @@ if report_type == "📈 Monthly Financial Report":
     
     with col3:
         if avg_burn_rate > 0:
-            st.warning(f"**Burn Rate**\n\n₹{avg_burn_rate:,.0f} Cr average monthly burn")
+            st.warning(f"**Burn Rate**\n\n₹{avg_burn_rate:,.0f} Cr avg monthly")
         else:
-            st.success("**Burn Rate**\n\nNo cash burn - operating profitably")
+            st.success("**Burn Rate**\n\nOperating profitably")
     
     # Detailed Data Table
     with st.expander("📋 View Detailed Monthly Data Table"):
-        display_df = df[['Month', 'Revenue', 'Expenses', 'Net_Profit', 'Burn_Rate', 'Margin']].copy()
-        st.dataframe(display_df.style.format({
-            'Revenue': '₹{:,.0f} Cr',
-            'Expenses': '₹{:,.0f} Cr',
-            'Net_Profit': '₹{:,.0f} Cr',
-            'Burn_Rate': '₹{:,.0f} Cr',
-            'Margin': '{:.1f}%'
-        }).background_gradient(cmap='RdYlGn', subset=['Net_Profit', 'Margin']))
+        display_df = df[['Month', 'Revenue', 'Expenses', 'Net_Profit', 'Burn_Rate']].copy()
+        st.dataframe(display_df)
 
 # ==================== DELIVERABLE 2: CASH FLOW STATEMENT ====================
 elif report_type == "💰 Cash Flow Statement":
@@ -259,15 +236,15 @@ elif report_type == "💰 Cash Flow Statement":
     st.subheader("Cash Flow Components by Month")
     
     cf_components = cf_df[['Month', 'Net_Operating_CF', 'Net_Investing_CF', 'Net_Financing_CF']].set_index('Month')
-    st.bar_chart(cf_components, height=400, stack=False)
-    st.caption("Green: Operating | Red: Investing | Blue: Financing")
+    st.bar_chart(cf_components, height=400)
+    st.caption("Note: Positive values = inflows, Negative values = outflows")
     
     st.markdown("---")
     
     # Net Cash Flow Trend
     st.subheader("Net Cash Flow Trend")
     net_cf_trend = cf_df[['Month', 'Net_Cash_Flow']].set_index('Month')
-    st.area_chart(net_cf_trend, height=350, color='#9b59b6')
+    st.area_chart(net_cf_trend, height=350)
     
     st.markdown("---")
     
@@ -275,7 +252,7 @@ elif report_type == "💰 Cash Flow Statement":
     st.subheader("Cumulative Cash Position")
     cf_df['Cumulative_Cash'] = 250000 + cf_df['Net_Cash_Flow'].cumsum()
     cumulative = cf_df[['Month', 'Cumulative_Cash']].set_index('Month')
-    st.line_chart(cumulative, height=350, color='#2ecc71')
+    st.line_chart(cumulative, height=350)
     
     st.markdown("---")
     
@@ -296,25 +273,13 @@ elif report_type == "💰 Cash Flow Statement":
     with col1:
         st.bar_chart(inflows_outflows.set_index('Category'), height=350)
     with col2:
-        st.dataframe(inflows_outflows.style.format({'Amount (₹ Cr)': '₹{:,.0f} Cr'})
-                     .bar(color=['lightgreen', 'lightgreen', 'lightcoral', 'lightcoral'], 
-                          subset=['Amount (₹ Cr)']))
+        st.dataframe(inflows_outflows, use_container_width=True)
     
     # Monthly Cash Flow Table
     with st.expander("📋 View Detailed Monthly Cash Flow Table"):
-        display_cf = cf_df[['Month', 'Operating_Inflows', 'Operating_Outflows', 
-                           'Net_Operating_CF', 'Investing_Outflows', 'Net_Investing_CF',
-                           'Financing_Inflows', 'Net_Cash_Flow', 'Cumulative_Cash']].copy()
-        st.dataframe(display_cf.style.format({
-            'Operating_Inflows': '₹{:,.0f} Cr',
-            'Operating_Outflows': '₹{:,.0f} Cr',
-            'Net_Operating_CF': '₹{:,.0f} Cr',
-            'Investing_Outflows': '₹{:,.0f} Cr',
-            'Net_Investing_CF': '₹{:,.0f} Cr',
-            'Financing_Inflows': '₹{:,.0f} Cr',
-            'Net_Cash_Flow': '₹{:,.0f} Cr',
-            'Cumulative_Cash': '₹{:,.0f} Cr'
-        }).background_gradient(cmap='RdYlGn', subset=['Net_Cash_Flow']))
+        display_cf = cf_df[['Month', 'Net_Operating_CF', 'Net_Investing_CF', 
+                           'Net_Financing_CF', 'Net_Cash_Flow', 'Cumulative_Cash']].copy()
+        st.dataframe(display_cf)
 
 # ==================== DELIVERABLE 3: BUDGET VS ACTUAL ====================
 else:
@@ -327,52 +292,55 @@ else:
         'Category': ['O2C Revenue', 'Retail Revenue', 'Digital Revenue', 
                     'Operating Expenses', 'Employee Cost', 'Marketing', 
                     'R&D', 'CAPEX'],
-        'Budget (₹ Cr)': [1020000, 660000, 420000, 1650000, 110000, 48000, 38000, 120000],
-        'Actual (₹ Cr)': [1050000, 670000, 435000, 1680000, 115000, 50000, 40000, 130000]
+        'Budget': [1020000, 660000, 420000, 1650000, 110000, 48000, 38000, 120000],
+        'Actual': [1050000, 670000, 435000, 1680000, 115000, 50000, 40000, 130000]
     }
     budget_df = pd.DataFrame(budget_data)
-    budget_df['Variance (₹ Cr)'] = budget_df['Actual (₹ Cr)'] - budget_df['Budget (₹ Cr)']
-    budget_df['Variance %'] = (budget_df['Variance (₹ Cr)'] / budget_df['Budget (₹ Cr)']) * 100
-    budget_df['Status'] = budget_df['Variance %'].apply(
-        lambda x: '✅ On Track' if abs(x) <= 5 else ('⚠️ Over Budget' if x > 0 else '📉 Under Budget')
-    )
+    budget_df['Variance'] = budget_df['Actual'] - budget_df['Budget']
+    budget_df['Variance_Pct'] = (budget_df['Variance'] / budget_df['Budget']) * 100
     
-    # Separate Revenue and Expense
-    revenue_cats = ['O2C Revenue', 'Retail Revenue', 'Digital Revenue']
-    expense_cats = ['Operating Expenses', 'Employee Cost', 'Marketing', 'R&D', 'CAPEX']
+    # Add status column
+    def get_status(pct):
+        if abs(pct) <= 5:
+            return "✅ On Track"
+        elif pct > 0:
+            return "⚠️ Over Budget"
+        else:
+            return "📉 Under Budget"
+    
+    budget_df['Status'] = budget_df['Variance_Pct'].apply(get_status)
     
     # Summary Metrics
     st.subheader("Executive Summary")
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        total_budget = budget_df['Budget (₹ Cr)'].sum()
-        total_actual = budget_df['Actual (₹ Cr)'].sum()
+        total_budget = budget_df['Budget'].sum()
+        total_actual = budget_df['Actual'].sum()
         st.metric("Total Budget", f"₹{total_budget:,.0f} Cr")
         st.metric("Total Actual", f"₹{total_actual:,.0f} Cr")
     
     with col2:
         total_variance = total_actual - total_budget
-        st.metric("Total Variance", f"₹{total_variance:,.0f} Cr",
-                 delta=f"{((total_variance)/total_budget*100):.1f}%")
+        st.metric("Total Variance", f"₹{total_variance:,.0f} Cr")
     
     with col3:
         achievement_rate = (total_actual / total_budget) * 100
         st.metric("Budget Achievement", f"{achievement_rate:.1f}%")
     
     with col4:
-        revenue_actual = budget_df[budget_df['Category'].isin(revenue_cats)]['Actual (₹ Cr)'].sum()
-        revenue_budget = budget_df[budget_df['Category'].isin(revenue_cats)]['Budget (₹ Cr)'].sum()
+        revenue_cats = ['O2C Revenue', 'Retail Revenue', 'Digital Revenue']
+        revenue_actual = budget_df[budget_df['Category'].isin(revenue_cats)]['Actual'].sum()
+        revenue_budget = budget_df[budget_df['Category'].isin(revenue_cats)]['Budget'].sum()
         revenue_achievement = (revenue_actual / revenue_budget) * 100
-        st.metric("Revenue Achievement", f"{revenue_achievement:.1f}%",
-                 delta="Target met" if revenue_achievement >= 100 else "Below target")
+        st.metric("Revenue Achievement", f"{revenue_achievement:.1f}%")
     
     st.markdown("---")
     
     # Budget vs Actual Comparison
     st.subheader("Budget vs Actual Comparison")
     
-    comparison_df = budget_df.set_index('Category')[['Budget (₹ Cr)', 'Actual (₹ Cr)']]
+    comparison_df = budget_df.set_index('Category')[['Budget', 'Actual']]
     st.bar_chart(comparison_df, height=450)
     
     st.markdown("---")
@@ -384,19 +352,19 @@ else:
     
     with col1:
         st.markdown("#### ✅ Under Budget (Savings)")
-        under_budget = budget_df[budget_df['Variance (₹ Cr)'] < 0]
+        under_budget = budget_df[budget_df['Variance'] < 0]
         if len(under_budget) > 0:
             for _, row in under_budget.iterrows():
-                st.success(f"**{row['Category']}**: Saved ₹{abs(row['Variance (₹ Cr)']):,.0f} Cr ({abs(row['Variance %']):.1f}% below)")
+                st.success(f"**{row['Category']}**: Saved ₹{abs(row['Variance']):,.0f} Cr")
         else:
             st.info("No categories under budget")
     
     with col2:
         st.markdown("#### ⚠️ Over Budget (Overspending)")
-        over_budget = budget_df[budget_df['Variance (₹ Cr)'] > 0]
+        over_budget = budget_df[budget_df['Variance'] > 0]
         if len(over_budget) > 0:
             for _, row in over_budget.iterrows():
-                st.warning(f"**{row['Category']}**: Overspent ₹{row['Variance (₹ Cr)']:,.0f} Cr ({row['Variance %']:.1f}% above)")
+                st.warning(f"**{row['Category']}**: Overspent ₹{row['Variance']:,.0f} Cr")
         else:
             st.success("No overspending detected")
     
@@ -404,30 +372,34 @@ else:
     
     # Revenue Performance
     st.subheader("Revenue Performance")
+    revenue_cats = ['O2C Revenue', 'Retail Revenue', 'Digital Revenue']
     revenue_df = budget_df[budget_df['Category'].isin(revenue_cats)]
-    revenue_compare = revenue_df.set_index('Category')[['Budget (₹ Cr)', 'Actual (₹ Cr)']]
+    revenue_compare = revenue_df.set_index('Category')[['Budget', 'Actual']]
     st.bar_chart(revenue_compare, height=350)
     
     st.markdown("---")
     
     # Expense Performance
     st.subheader("Expense Performance")
+    expense_cats = ['Operating Expenses', 'Employee Cost', 'Marketing', 'R&D', 'CAPEX']
     expense_df = budget_df[budget_df['Category'].isin(expense_cats)]
-    expense_compare = expense_df.set_index('Category')[['Budget (₹ Cr)', 'Actual (₹ Cr)']]
+    expense_compare = expense_df.set_index('Category')[['Budget', 'Actual']]
     st.bar_chart(expense_compare, height=350)
     
     st.markdown("---")
     
     # Variance Table
     st.subheader("Variance Analysis Table")
-    variance_table = budget_df[['Category', 'Budget (₹ Cr)', 'Actual (₹ Cr)', 
-                                'Variance (₹ Cr)', 'Variance %', 'Status']].copy()
-    st.dataframe(variance_table.style.format({
-        'Budget (₹ Cr)': '₹{:,.0f} Cr',
-        'Actual (₹ Cr)': '₹{:,.0f} Cr',
-        'Variance (₹ Cr)': '₹{:,.0f} Cr',
-        'Variance %': '{:.1f}%'
-    }).background_gradient(cmap='RdYlGn', subset=['Variance %']))
+    variance_table = budget_df[['Category', 'Budget', 'Actual', 'Variance', 'Variance_Pct', 'Status']].copy()
+    
+    # Format the dataframe for display
+    variance_table_display = variance_table.copy()
+    variance_table_display['Budget'] = variance_table_display['Budget'].apply(lambda x: f"₹{x:,.0f} Cr")
+    variance_table_display['Actual'] = variance_table_display['Actual'].apply(lambda x: f"₹{x:,.0f} Cr")
+    variance_table_display['Variance'] = variance_table_display['Variance'].apply(lambda x: f"₹{x:,.0f} Cr")
+    variance_table_display['Variance_Pct'] = variance_table_display['Variance_Pct'].apply(lambda x: f"{x:.1f}%")
+    
+    st.dataframe(variance_table_display, use_container_width=True)
     
     # Recommendations
     st.markdown("---")
@@ -437,23 +409,23 @@ else:
     
     with col1:
         st.markdown("**Based on variance analysis:**")
-        major_variances = budget_df[abs(budget_df['Variance %']) > 5]
+        major_variances = budget_df[abs(budget_df['Variance_Pct']) > 5]
         if len(major_variances) > 0:
             for _, row in major_variances.iterrows():
-                if row['Variance (₹ Cr)'] > 0:
-                    st.markdown(f"- 🔍 **Review {row['Category']}** - Overspending requires attention")
+                if row['Variance'] > 0:
+                    st.markdown(f"- 🔍 Review **{row['Category']}**")
                 else:
-                    st.markdown(f"- ✅ **Maintain {row['Category']}** - Good cost control")
+                    st.markdown(f"- ✅ Maintain **{row['Category']}**")
         else:
-            st.success("All categories within acceptable variance range (±5%)")
+            st.success("All categories within acceptable range")
     
     with col2:
-        st.markdown("**Key Actions for Next Quarter:**")
+        st.markdown("**Key Actions:**")
         st.markdown("""
-        - 📊 Implement monthly budget reviews
-        - 🎯 Set stricter controls on marketing spend
-        - 📈 Investigate revenue upside in Digital segment
-        - 💰 Optimize operating expenses structure
+        - 📊 Monthly budget reviews
+        - 🎯 Control marketing spend
+        - 📈 Optimize revenue streams
+        - 💰 Reduce operating costs
         """)
 
 # Footer
@@ -467,4 +439,4 @@ with col2:
 with col3:
     st.success("🎯 Budget vs Actual Report")
 st.markdown("---")
-st.caption("📊 Data Source: Reliance Industries Financial Reports FY 2024-25")
+st.caption("📊 Reliance Industries Financial Intelligence Dashboard - FY 2024-25")
